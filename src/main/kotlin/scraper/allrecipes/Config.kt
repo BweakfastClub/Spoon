@@ -1,0 +1,3 @@
+package scraper.allrecipes
+
+const val apiKey = "84XAr4Z2Z57+ieH6qwuIrZfeJ31uD3TXpqbgA8TbcAkHKE1YGPdyDpjXpCGLxK6ieV5tW+hmHCBRMy3nQ2WV1/3qLkJqEsZiJCr9jaoquIpIDuLbKnMSG9jCr3xhvlTOn+hF4ECy1EU2mHYJ4ajpcvTw239bB2ulpRFkMvBQQFI+AdjW/m8Nsw=="
