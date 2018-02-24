@@ -62,8 +62,8 @@ object ReviewsScraper {
                 .httpGet()
                 .responseString()
         val (data, error) = result
-        val json = jsonParser.parse(data)
         if (error == null) {
+            val json = jsonParser.parse(data)
             Math.ceil(json.asJsonObject["metaData"].asJsonObject["totalCount"].double / pageSize).toInt()
         } else {
             throw error
@@ -75,8 +75,8 @@ object ReviewsScraper {
                 .httpGet()
                 .responseString()
         val (data, error) = result
-        val json = jsonParser.parse(data)
         if (error == null) {
+            val json = jsonParser.parse(data)
             json.asJsonObject["reviews"].asJsonArray
         } else {
             throw error

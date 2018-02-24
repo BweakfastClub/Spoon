@@ -95,8 +95,8 @@ object RecipeScraper {
                 .httpGet()
                 .responseString()
         val (data, error) = result
-        val json = jsonParser.parse(data)
         if (error == null) {
+            val json = jsonParser.parse(data)
             json.asJsonObject["cards"].asJsonArray
         } else {
             throw error
