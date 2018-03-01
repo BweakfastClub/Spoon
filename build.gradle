@@ -23,11 +23,12 @@ repositories {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.19.2"
-    compile 'com.github.salomonbrys.kotson:kotson:2.5.0'
-    compile 'com.github.kittinunf.fuel:fuel:1.12.1'
-    compile 'com.github.kittinunf.fuel:fuel-gson:1.12.1'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.19.2"
+    implementation 'com.github.salomonbrys.kotson:kotson:2.5.0'
+    implementation 'com.github.kittinunf.fuel:fuel:1.12.1'
+    implementation 'com.github.kittinunf.fuel:fuel-gson:1.12.1'
+    implementation 'com.datastax.cassandra:cassandra-driver-core:3.4.0'
 }
 
 compileKotlin {
