@@ -20,8 +20,7 @@ import java.io.InputStreamReader
 object Ingester {
     private val gson = Gson()
 
-    @JvmStatic
-    fun main(args: Array<String>) = runBlocking {
+    fun run() = launch {
         Cluster
             .builder()
             .addContactPoint("127.0.0.1")

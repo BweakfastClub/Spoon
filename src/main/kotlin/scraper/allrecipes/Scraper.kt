@@ -1,6 +1,7 @@
 package scraper.allrecipes
 
 import com.github.kittinunf.fuel.core.FuelManager
+import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import java.io.File
 
@@ -19,8 +20,7 @@ object Scraper {
             87 to "Vegetarian"
     )
 
-    @JvmStatic
-    fun main(args: Array<String>) {
+    fun run() = launch {
         try {
             FuelManager.instance.basePath = "https://apps.allrecipes.com/v1"
             FuelManager.instance.baseHeaders = mapOf("Authorization" to "Bearer $apiKey")
