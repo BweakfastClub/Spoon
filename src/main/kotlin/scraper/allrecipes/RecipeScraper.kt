@@ -16,12 +16,12 @@ import java.io.File
 object RecipeScraper {
     private val gson = Gson()
     private val jsonParser = JsonParser()
-    private val sendChannel = Channel<Int>()
-    private val defaultRecipe = Recipe(emptyList(), "", emptyMap(), -1, -1, -1, -1)
-    private val coroutineContext = newFixedThreadPoolContext(25, "RecipeThread")
+    private val reviewChannel = Channel<Int>()
+    private val defaultRecipe = Recipe(emptyList(), "", emptyMap(), -1, -1, -1, -1, "")
+    private val coroutineContext = newFixedThreadPoolContext(15, "RecipeThread")
 
     init {
-        ReviewsScraper.channel = sendChannel
+        ReviewsScraper.channel = reviewChannel
     }
 
     fun scrape(category: Pair<Int, String>) = launch {
@@ -32,40 +32,33 @@ object RecipeScraper {
             println("Found last page of category $categoryID to be $pageCount")
 
             val recipes = (0 until pageCount)
-                    .map { i ->
-                        val index = i + 1
-                        getRecipes(categoryID, index)
-                    }
-                    .map {
-                        try {
-                            it.await()
-                        } catch (e: Exception) {
-                            throw e
+                .map { i ->
+                    val index = i + 1
+                    getRecipes(categoryID, index)
+                }
+                .flatMap { array ->
+                    array.await().map {
+                        val recipeID = if (it.asJsonObject.has("associatedRecipeCook")) {
+                            it["associatedRecipeCook"]["id"].int
+                        } else {
+                            it["id"].int
                         }
+                        reviewChannel.send(recipeID)
+                        getRecipe(recipeID)
                     }
-                    .flatMap { array ->
-                        array.map {
-                            val recipeID = if (it.asJsonObject.has("associatedRecipeCook")) {
-                                it["associatedRecipeCook"]["id"].int
-                            } else {
-                                it["id"].int
-                            }
-                            sendChannel.send(recipeID)
-                            getRecipe(recipeID)
-                        }
+                }
+                .map {
+                    try {
+                        it.await()
+                    } catch (e: Exception) {
+                        throw e
                     }
-                    .map {
-                        try {
-                            it.await()
-                        } catch (e: Exception) {
-                            throw e
-                        }
-                    }
+                }
 
             val file = File("./data/recipes/${parseName(name)}.json")
             println("Saving recipes for $categoryID")
 
-            file.writeText(gson.toJson(recipes.filter { it != defaultRecipe }))
+            file.writeText(gson.toJson(recipes.filter { it != defaultRecipe }.distinct()))
             println("Finished category $categoryID: $name")
             println("Saved to ${file.name}")
         } catch (e: Exception) {
@@ -92,8 +85,8 @@ object RecipeScraper {
 
     private fun getRecipes(categoryID: Int, pageNumber: Int) = async(coroutineContext) {
         val (_, _, result) = "/assets/hub-feed?id=$categoryID&pageNumber=$pageNumber&isSponsored=true&sortType=p"
-                .httpGet()
-                .responseString()
+            .httpGet()
+            .responseString()
         val (data, error) = result
         if (error == null) {
             val json = jsonParser.parse(data)
@@ -105,8 +98,8 @@ object RecipeScraper {
 
     private fun getRecipe(recipeID: Int) = async(coroutineContext) {
         val (_, _, result) = "/recipes/$recipeID?isMetric=false"
-                .httpGet()
-                .responseObject<Recipe>()
+            .httpGet()
+            .responseObject<Recipe>()
         val (data, error) = result
         if (error == null) {
             if (data != null) {
@@ -122,7 +115,8 @@ object RecipeScraper {
         }
     }
 
-    private fun isLastPage(categoryID: Int, pageNumber: Int) = async(coroutineContext) { getRecipes(categoryID, pageNumber - 1).await().size() > 0 }
+    private fun isLastPage(categoryID: Int, pageNumber: Int) =
+        async(coroutineContext) { getRecipes(categoryID, pageNumber - 1).await().size() > 0 }
 
     private fun parseName(name: String) = name.toLowerCase().replace(" ", "_").replace("&", "and")
 }

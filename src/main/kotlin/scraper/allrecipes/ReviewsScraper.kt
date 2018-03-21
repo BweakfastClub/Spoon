@@ -15,7 +15,7 @@ import java.io.File
 object ReviewsScraper {
     private val gson = Gson()
     private val jsonParser = JsonParser()
-    private val coroutineContext = newFixedThreadPoolContext(25, "ReviewsThread")
+    private val coroutineContext = newFixedThreadPoolContext(15, "ReviewsThread")
     var channel: ReceiveChannel<Int> = Channel(0)
         set(value) {
             field = value
