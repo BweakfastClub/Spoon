@@ -28,7 +28,7 @@ dependencies {
     implementation 'com.github.salomonbrys.kotson:kotson:2.5.0'
     implementation 'com.github.kittinunf.fuel:fuel:1.12.1'
     implementation 'com.github.kittinunf.fuel:fuel-gson:1.12.1'
-    implementation 'com.datastax.cassandra:cassandra-driver-core:3.4.0'
+    implementation 'org.mongodb:mongodb-driver-async:3.6.3'
 }
 
 compileKotlin {
