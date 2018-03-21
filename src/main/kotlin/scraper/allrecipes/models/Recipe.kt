@@ -10,7 +10,8 @@ data class Recipe(
         val servings: Int,
         val prepMinutes: Int,
         val cookMinutes: Int,
-        val readyMinutes: Int
+        val readyMinutes: Int,
+        @SerializedName("imageUrl") val imageURL: String
 ) {
     var id = -1
     var reviews = emptyList<Int>()
