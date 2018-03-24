@@ -1,5 +1,6 @@
 package main
 
+import generator.RecipeCreator
 import ingester.Ingester
 import kotlinx.coroutines.experimental.runBlocking
 import scraper.allrecipes.Scraper
@@ -14,7 +15,8 @@ object Main {
 
         val arguments = listOf(
             Argument("--scrape", "scraper", Scraper::run),
-            Argument("--ingest", "ingester", Ingester::run)
+            Argument("--ingest", "ingester", Ingester::run),
+            Argument("--generate", "generator", RecipeCreator::run)
         )
 
         if (args.isNotEmpty()) {
