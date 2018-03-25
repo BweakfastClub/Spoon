@@ -3,9 +3,11 @@ package ingester
 import com.github.salomonbrys.kotson.fromJson
 import com.google.gson.Gson
 import com.google.gson.stream.JsonReader
+import com.mongodb.ConnectionString
 import com.mongodb.async.client.MongoClientSettings
 import com.mongodb.async.client.MongoClients
 import com.mongodb.async.client.MongoDatabase
+import com.mongodb.connection.ClusterSettings
 import ingester.models.Recipe
 import kotlinx.coroutines.experimental.launch
 import org.bson.Document
@@ -23,15 +25,28 @@ object Ingester {
             MongoClients.getDefaultCodecRegistry(),
             CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build())
         )
-        MongoClients.create(MongoClientSettings.builder().codecRegistry(pojoCodecRegistry).build()).use { client ->
-            val db = client.getDatabase("development")
+        val clusterSettings = ClusterSettings
+            .builder()
+            .applyConnectionString(ConnectionString("mongodb://localhost"))
+            .build()
 
-            File("./data/recipes")
-                .walkBottomUp()
-                .filter { it.isFile }
-                .map { saveJSONInDB(db, it) }
-                .forEach { it.join() }
-        }
+        MongoClients.create(
+            MongoClientSettings
+                .builder()
+                .codecRegistry(pojoCodecRegistry)
+                .clusterSettings(clusterSettings)
+                .build()
+        )
+            .use { client ->
+                val db = client.getDatabase("development")
+                println(clearDB(db))
+
+                File("./data/recipes")
+                    .walkBottomUp()
+                    .filter { it.isFile }
+                    .map { saveJSONInDB(db, it) }
+                    .forEach { it.join() }
+            }
     }
 
     private fun saveJSONInDB(database: MongoDatabase, file: File) = launch {
