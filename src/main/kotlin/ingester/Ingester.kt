@@ -1,69 +1,93 @@
 package ingester
 
-import com.datastax.driver.core.BatchStatement
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.utils.UUIDs
-import com.github.salomonbrys.kotson.float
 import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.string
 import com.google.gson.Gson
 import com.google.gson.stream.JsonReader
+import com.mongodb.ConnectionString
+import com.mongodb.async.client.MongoClientSettings
+import com.mongodb.async.client.MongoClients
+import com.mongodb.async.client.MongoDatabase
+import com.mongodb.connection.ClusterSettings
 import ingester.models.Recipe
 import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import org.bson.Document
+import org.bson.codecs.configuration.CodecRegistries
+import org.bson.codecs.pojo.PojoCodecProvider
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
+import kotlin.coroutines.experimental.suspendCoroutine
 
 object Ingester {
     private val gson = Gson()
 
     fun run() = launch {
-        Cluster
+        val pojoCodecRegistry = CodecRegistries.fromRegistries(
+            MongoClients.getDefaultCodecRegistry(),
+            CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build())
+        )
+        val clusterSettings = ClusterSettings
             .builder()
-            .addContactPoint("127.0.0.1")
-            .build().use { cluster ->
-            val session = cluster.connect("development")
-            val statement =
-                session.prepare("INSERT INTO recipes (ingredients, title, nutrition, servings, id) VALUES (?, ?, ?, ?, ?)")
+            .applyConnectionString(ConnectionString("mongodb://localhost"))
+            .build()
 
-            File("./data/recipes")
-                .walkBottomUp()
-                .filter { it.isFile }
-                .map { saveJSONInCassandra(session, statement, it) }
-                .forEach { it.join() }
+        MongoClients.create(
+            MongoClientSettings
+                .builder()
+                .codecRegistry(pojoCodecRegistry)
+                .clusterSettings(clusterSettings)
+                .build()
+        )
+            .use { client ->
+                val db = client.getDatabase("development")
+                println(clearDB(db))
+
+                File("./data/recipes")
+                    .walkBottomUp()
+                    .filter { it.isFile }
+                    .map { saveJSONInDB(db, it) }
+                    .forEach { it.join() }
+            }
+    }
+
+    private suspend fun clearDB(database: MongoDatabase) = suspendCoroutine<String> {
+        database.getCollection("recipes").deleteMany(Document()) { _, error ->
+            if (error != null) {
+                it.resumeWithException(error)
+            } else {
+                it.resume("Cleared recipes document")
+            }
         }
     }
 
-    private fun saveJSONInCassandra(session: Session, statement: PreparedStatement, file: File) = launch {
-        val batchSize = 50
+    private fun saveJSONInDB(database: MongoDatabase, file: File) = launch {
         val recipes = gson.fromJson<List<Recipe>>(JsonReader(InputStreamReader(FileInputStream(file))))
-        val statements = recipes.map {
-            statement.bind(
-                it.ingredients.associate { it.id to it.name },
-                it.title,
-                it.nutrition.toList().associate {
-                    val unit = if (it.second.has("unit")) {
-                        it.second["unit"].string
-                    } else {
-                        ""
-                    }
-                    it.first to "${it.second["amount"].float}$unit"
-                },
-                it.servings,
-                UUIDs.timeBased()
-            )
-        }.toMutableList()
+        val documents = recipes.map {
+            with(it) {
+                Document(
+                    mapOf(
+                        "ingredients" to ingredients,
+                        "title" to title,
+                        "nutrition" to nutrition,
+                        "servings" to servings,
+                        "prepMinutes" to prepMinutes,
+                        "cookMinutes" to cookMinutes,
+                        "readyMinutes" to readyMinutes
+                    )
+                )
+            }
+        }
 
-        while (statements.isNotEmpty()) {
-            val removedElements = statements.take(batchSize)
-            session.execute(
-                BatchStatement().addAll(removedElements)
-            )
-            statements.removeAll(removedElements)
-            println("${statements.size} statements left - ${file.absolutePath}")
+        println("Successfully ingested ${insertDocuments(database, documents)} recipes")
+    }
+
+    private suspend fun insertDocuments(database: MongoDatabase, documents: List<Document>) = suspendCoroutine<Int> {
+        database.getCollection("recipes").insertMany(documents) { _, error ->
+            if (error != null) {
+                it.resumeWithException(error)
+            } else {
+                it.resume(documents.size)
+            }
         }
     }
 }
