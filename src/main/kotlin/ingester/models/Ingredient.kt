@@ -7,4 +7,8 @@ data class Ingredient(
     @SerializedName("displayValue") val name: String,
     val grams: Float,
     val displayType: String
-)
+) {
+    override fun toString(): String {
+        return "Ingredient($id, \"$name\", $grams, \"$displayType\")"
+    }
+}
