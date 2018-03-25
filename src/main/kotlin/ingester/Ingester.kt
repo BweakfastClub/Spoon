@@ -16,6 +16,7 @@ import org.bson.codecs.pojo.PojoCodecProvider
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
+import kotlin.coroutines.experimental.suspendCoroutine
 
 object Ingester {
     private val gson = Gson()
@@ -49,6 +50,16 @@ object Ingester {
             }
     }
 
+    private suspend fun clearDB(database: MongoDatabase) = suspendCoroutine<String> {
+        database.getCollection("recipes").deleteMany(Document()) { _, error ->
+            if (error != null) {
+                it.resumeWithException(error)
+            } else {
+                it.resume("Cleared recipes document")
+            }
+        }
+    }
+
     private fun saveJSONInDB(database: MongoDatabase, file: File) = launch {
         val recipes = gson.fromJson<List<Recipe>>(JsonReader(InputStreamReader(FileInputStream(file))))
         val documents = recipes.map {
@@ -65,13 +76,17 @@ object Ingester {
                     )
                 )
             }
-        }.toMutableList()
+        }
 
+        println("Successfully ingested ${insertDocuments(database, documents)} recipes")
+    }
+
+    private suspend fun insertDocuments(database: MongoDatabase, documents: List<Document>) = suspendCoroutine<Int> {
         database.getCollection("recipes").insertMany(documents) { _, error ->
             if (error != null) {
-                throw error
+                it.resumeWithException(error)
             } else {
-                println("Successfully ingested ${recipes.size} recipes")
+                it.resume(documents.size)
             }
         }
     }
