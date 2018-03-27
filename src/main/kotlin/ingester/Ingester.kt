@@ -8,7 +8,7 @@ import com.mongodb.async.client.MongoClientSettings
 import com.mongodb.async.client.MongoClients
 import com.mongodb.async.client.MongoDatabase
 import com.mongodb.connection.ClusterSettings
-import ingester.models.Recipe
+import models.Recipe
 import kotlinx.coroutines.experimental.launch
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistries

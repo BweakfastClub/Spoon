@@ -1,4 +1,4 @@
-package ingester.models
+package models
 
 import com.google.gson.annotations.SerializedName
 
@@ -9,6 +9,6 @@ data class Ingredient(
     val displayType: String
 ) {
     override fun toString(): String {
-        return "Ingredient($id, \"$name\", $grams, \"$displayType\")"
+        return "Ingredient($id, \"$name\", ${grams}f, \"$displayType\")"
     }
 }

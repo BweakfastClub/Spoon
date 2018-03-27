@@ -10,7 +10,7 @@ import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.newFixedThreadPoolContext
-import scraper.allrecipes.models.Recipe
+import models.Recipe
 import java.io.File
 
 object RecipeScraper {
