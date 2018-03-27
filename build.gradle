@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.30'
+    ext.kotlin_version = '1.2.31'
 
     repositories {
         mavenCentral()
@@ -28,7 +28,10 @@ dependencies {
     implementation 'com.github.salomonbrys.kotson:kotson:2.5.0'
     implementation 'com.github.kittinunf.fuel:fuel:1.12.1'
     implementation 'com.github.kittinunf.fuel:fuel-gson:1.12.1'
+    implementation 'khttp:khttp:0.1.0'
     implementation 'org.mongodb:mongodb-driver-async:3.6.3'
+
+    testImplementation 'junit:junit:4.12'
 }
 
 compileKotlin {
