@@ -1,14 +1,15 @@
 package generator
 
-import java.util.*
-
 private const val INT_MAX_POWER_OF_TWO: Int = Int.MAX_VALUE / 2 + 1
 
 class QuotedLinkedHashMap<K, V>(initialCapacity: Int) : LinkedHashMap<K, V>(initialCapacity) {
     override fun toString(): String {
         return "mapOf(${this.entries.joinToString(", ") { (k, v) ->
-            val key = k.toString().replace("\"", "\\\"")
-            val value = v.toString().replace("\"", "\\\"")
+            var key = k.toString()
+            var value = v.toString()
+
+            if (k is String) key = key.replace("\"", "\\\"")
+            if (v is String) value = value.replace("\"", "\\\"")
             
             if (k is String && v is String) "\"$key\" to \"$value\""
             else if (k is String && v !is String) "\"$key\" to $value"
