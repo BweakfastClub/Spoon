@@ -1,0 +1,1 @@
+fun quotedStringOrNull(string: String?): String? = string?.let { "\"$it\"" }
