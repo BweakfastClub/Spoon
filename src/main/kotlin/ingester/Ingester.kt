@@ -72,7 +72,8 @@ object Ingester {
                         "servings" to servings,
                         "prepMinutes" to prepMinutes,
                         "cookMinutes" to cookMinutes,
-                        "readyMinutes" to readyMinutes
+                        "readyMinutes" to readyMinutes,
+                        "imageURL" to imageURL
                     )
                 )
             }
